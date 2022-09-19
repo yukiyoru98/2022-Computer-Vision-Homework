@@ -1,4 +1,3 @@
-import os
 import argparse
 import cv2 as cv
 from imageTransform import ImageTransform
