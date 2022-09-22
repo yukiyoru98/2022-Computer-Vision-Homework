@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
 
 def saveLabelMap(data):
     cmap = plt.get_cmap('gist_ncar').copy()
@@ -54,10 +55,6 @@ class LabelClass:
         self.weightX += x
         self.weightY += y
     
-    def print(self):
-        print(f"{self.eqLabel} : {self.pixelCnt} | ({self.rectLeft},{self.rectTop}), | ({self.rectRight},{self.rectBottom})")
-
-
 class ConnectComponent:
     def __init__(self, binary_image):
         self.image = binary_image
@@ -97,7 +94,7 @@ class ConnectComponent:
 
         return neighbors
 
-    def getConnectedComponents(self):
+    def assignLabels(self):
         row = self.row
         col = self.col
         next_label = 1
@@ -172,33 +169,39 @@ class ConnectComponent:
                     self.label_map[i, j] = eqTable[current_label].eqLabel
                     self.confirmPixelLabel(i, j, current_label)
             
-            saveLabelMap(self.label_map)
+        # saveLabelMap(self.label_map)
 
         return
 
-    def drawComponents(self, imageToDraw, threshold = 500):
+    def drawComponents(self, sourceImg, threshold):
+        img = sourceImg.copy()
         for label in self.labels.values():
             if(label.pixelCnt >= threshold):
-                cv.rectangle(imageToDraw, (label.rectLeft, label.rectTop), (label.rectRight, label.rectBottom), (255, 0, 0))
+                cv.rectangle(img, (label.rectLeft, label.rectTop), (label.rectRight, label.rectBottom), (255, 0, 0))
                 centerX = round(label.weightX / label.pixelCnt)
                 centerY = round(label.weightY / label.pixelCnt)
-                cv.circle(imageToDraw,(centerX, centerY), 3, (0, 0, 255), -1)
+                cv.circle(img,(centerX, centerY), 3, (0, 0, 255), -1)
 
-        cv.waitKey(0)
-        cv.imwrite('labeled_image.png', imageToDraw)
-        return
+        return img
 
 if __name__ == "__main__":
     
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--source",   default="lena.bmp")
+    parser.add_argument("-b", "--binary_threshold",   default=128)
+    parser.add_argument("-c", "--component_threshold",   default=500)
+    args = parser.parse_args()
+
     # read source image
-    image = cv.imread("lena.bmp", 0) # read with grayscale mode
+    image = cv.imread(args.source) 
+    grayscale_image = cv.cvtColor(image, cv.COLOR_RGB2GRAY) # convert to grayscale mode
 
     # binarize with threshold 128
-    binary_img = binarize(image, 128)
+    binary_img = binarize(grayscale_image, int(args.binary_threshold))
     plt.imsave('binary.bmp', binary_img, cmap='gray')
 
     # draw histogram
-    histogram = drawHistogram(image)
+    histogram = drawHistogram(grayscale_image)
     plt.bar(np.arange(256), histogram, width=1.0,color='black')
     plt.xlabel("Intensity")
     plt.ylabel("Pixels")
@@ -207,6 +210,6 @@ if __name__ == "__main__":
     
     # connected components
     cc = ConnectComponent(binary_image=binary_img)
-    cc.getConnectedComponents()
-    cc.drawComponents(cv.cvtColor(image, cv.COLOR_GRAY2BGR))
-
+    cc.assignLabels()
+    labeled = cc.drawComponents(image, int(args.component_threshold))
+    cv.imwrite('connected_components.png', labeled)
