@@ -25,7 +25,7 @@ def binarize(image, threshold): # image should be gray scale
                 result[i, j] = 0
     return result
 
-def drawHistogram(image):
+def getHistogram(image):
     row, col = image.shape
     histogram = np.zeros(256)
 
@@ -201,7 +201,7 @@ if __name__ == "__main__":
     plt.imsave('binary.bmp', binary_img, cmap='gray')
 
     # draw histogram
-    histogram = drawHistogram(grayscale_image)
+    histogram = getHistogram(grayscale_image)
     plt.bar(np.arange(256), histogram, width=1.0,color='black')
     plt.xlabel("Intensity")
     plt.ylabel("Pixels")
