@@ -37,6 +37,15 @@ def drawHistrogram(filename, histogram):
     plt.clf()
     return
 
+def drawCDF(filename, histogram):
+    plt.bar(np.arange(256), histogram, width=1.0,color='black')
+    plt.xlabel("Intensity")
+    plt.ylabel("Probability")
+    plt.title("CDF")
+    plt.savefig(filename)
+    plt.clf()
+    return
+
 def adjustIntensity(image, multiplier): # input image should be grayscale
     row, col = image.shape
     result = np.zeros(image.shape, np.uint8)
@@ -47,7 +56,7 @@ def adjustIntensity(image, multiplier): # input image should be grayscale
 
     return result
 
-def histogramEquilize(image, histogram): # input image should be grayscale
+def histogramEqualization(image, histogram): # input image should be grayscale
     row, col = image.shape
     result = np.zeros(image.shape, np.uint8)
     intensity_map = np.zeros(histogram.shape)
@@ -55,13 +64,10 @@ def histogramEquilize(image, histogram): # input image should be grayscale
     # calculate cdf and normalize to 0-255 to get the new intensity value
     total_pixels =  row * col
     sum = 0
-    cdf_min = -1
     for i in range(256):
         sum += histogram[i]
         cdf = sum / total_pixels
-        if(cdf_min < 0 and histogram[i] > 0):
-            cdf_min = cdf
-        intensity_map[i] = round(255 * (cdf - cdf_min))
+        intensity_map[i] = round(255 * cdf )
     
     # recolor the original image with the equalized intensity value
     for i in range(row):
@@ -80,16 +86,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # read source image
-    image = cv.imread(args.source) 
-    grayscale_image = cv.cvtColor(image, cv.COLOR_RGB2GRAY) # convert to grayscale mode
+    image = cv.imread(args.source, 0) # read with grayscale mode
     # save image
     cv.imwrite('original_image.bmp', image)
     # draw original histogram
-    original_histogram = getHistogram(grayscale_image)
+    original_histogram = getHistogram(image)
     drawHistrogram('original_histogram.png', original_histogram)
 
     # intensity divided by 3 
-    dark_image = adjustIntensity(grayscale_image, float(args.intensity_multiplier) )
+    dark_image = adjustIntensity(image, float(args.intensity_multiplier) )
     # save image
     cv.imwrite('dark_image.bmp', dark_image)
     # draw histogram
@@ -97,11 +102,12 @@ if __name__ == "__main__":
     drawHistrogram('dark_histogram.png', dark_histogram)
 
     # histogram equalization
-    eq_image = histogramEquilize(dark_image, dark_histogram)
+    eq_image = histogramEqualization(dark_image, dark_histogram)
     # save image
     cv.imwrite('equalized_image.bmp', eq_image)
     # draw histogram
     equalized_histogram = getHistogram(eq_image)
     drawHistrogram('equalized_histogram.png', equalized_histogram)
-    
+    drawCDF('dark_cdf.png',np.cumsum(dark_histogram / image.shape[0]/ image.shape[1]))
+    drawCDF('equilized_cdf.png',np.cumsum(equalized_histogram / image.shape[0]/ image.shape[1]))
     
