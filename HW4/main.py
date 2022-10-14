@@ -40,8 +40,8 @@ def binary_dilation(image, kernel): #input should be binary image
                         # kernel pixel displacement from kernel origin
                         dy = k - kernel.origin[0]
                         dx = l - kernel.origin[1]
-                        if( (i + dy) >= 0 and (i + dy < row) and (j + dx) >= 0 and (j + dx) < col ): # if kernel pixel is within image
-                            if(kernel.pixel(k, l) == 1): # if kernel pixel has value
+                        if(kernel.pixel(k, l) == 1): # if kernel pixel has value
+                            if( (i + dy) >= 0 and (i + dy < row) and (j + dx) >= 0 and (j + dx) < col ): # if kernel pixel is within image
                                 result[i+dy, j+dx] = 1 # dilate the corresponding pixel in result image
 
     return result
@@ -69,14 +69,15 @@ def binary_erosion(image, kernel): #input should be binary image
                         # print(i + dy)
                         # print(j + dx)
                         # print(kernel.pixel(k, l) == 0)
-                        if( (i + dy < 0) or (i + dy >= row) or (j + dx < 0) or (j + dx >= col) ): # if kernel pixel is out of image bound
-                            # print('out of bound')
-                            fit = False
-                            break
-                        if(kernel.pixel(k, l) == 1 and image[i+dy, j+dx] == 0): # if kernel pixel has value but corresponding image pixel does not
-                            # print('value 0')
-                            fit = False
-                            break
+                        if(kernel.pixel(k, l) == 1): 
+                            if( (i + dy < 0) or (i + dy >= row) or (j + dx < 0) or (j + dx >= col) ): # if kernel pixel is out of image bound
+                                # print('out of bound')
+                                fit = False
+                                break
+                            if(image[i+dy, j+dx] == 0): # if kernel pixel has value but corresponding image pixel does not
+                                # print('value 0')
+                                fit = False
+                                break
                         l += 1
                         # print(f'fit : {fit}')
 
@@ -104,6 +105,17 @@ if __name__ == "__main__":
                                 [0, 1, 1, 1, 0] ])
     oct_kernel = Kernel(oct_kernel_arr, (2, 2))
 
+    # setup L kernels
+    L_kernel_J_arr = np.array([ [0, 0, 0],
+                                [1, 1, 0],
+                                [0, 1, 0]])
+    L_kernel_K_arr = np.array([ [0, 1, 1],
+                                [0, 0, 1],
+                                [0, 0, 0]])
+
+    L_kernel_J = Kernel(L_kernel_J_arr, (1, 1))
+    L_kernel_K = Kernel(L_kernel_K_arr, (1, 1))
+
     # # binary dilation
     dilation_image = binary_dilation(binary_image, oct_kernel)
     plt.imsave('dilation.bmp', dilation_image, cmap='gray')
@@ -111,3 +123,11 @@ if __name__ == "__main__":
     # binary erosion
     erosion_image = binary_erosion(binary_image, oct_kernel)
     plt.imsave('erosion.bmp', erosion_image, cmap='gray')
+
+    # opening
+    opening_image = binary_dilation(erosion_image, oct_kernel)
+    plt.imsave('opening.bmp', opening_image, cmap='gray')
+
+    # closing 
+    closing_image = binary_erosion(dilation_image, oct_kernel)
+    plt.imsave('closing.bmp', closing_image, cmap='gray')
