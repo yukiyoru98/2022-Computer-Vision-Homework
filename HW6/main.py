@@ -32,47 +32,60 @@ def binarize(image, threshold): # input image should be gray scale
                 result[i, j] = 0
     return result   
 
-class Yokoi_4_connectivity:
+
+class Yokoi_4_connectivity_Operator:
 
     @staticmethod
-    def ComputeConnectivityNumber(image):
+    def Compute(image):
         # input should be binary image
         row, col = image.shape
         result = np.zeros(image.shape, np.uint8)
         
         for i in range(row):
             for j in range(col):
-            # for each white pixel, compute formula f
-                if((image[i, j] == 0) or (i-1<0) or (j-1<0) or (i+1>=row) or (j+1>=col)): # check boundary
-                    result[i, j] = 0
-                    continue
-                result[i, j] = Yokoi_4_connectivity.formula_f(image, i, j)
+            # for each white pixel, compute function f
+                if(image[i, j] == 1):
+                    result[i, j] = Yokoi_4_connectivity_Operator.function_f(image, i, j)
 
         return result
 
     @staticmethod
-    def formula_f(image, i, j):
+    def function_f(image, i, j):
+        row, col = image.shape
         x0 = image[i, j]
-        x1 = image[i, j+1]
-        x2 = image[i-1, j]
-        x3 = image[i, j-1]
-        x4 = image[i+1, j]
-        x5 = image[i+1, j+1]
-        x6 = image[i-1, j+1]
-        x7 = image[i-1, j-1]
-        x8 = image[i+1, j-1]
+        x1 = x2 = x3 = x4 = x5 = x6 = x7 = x8 = 0
+
+        if(j+1 < col):
+            x1 = image[i, j+1]
+
+        if(i-1 >= 0):
+            x2 = image[i-1, j]
+            if(j+1 < col):
+                x6 = image[i-1, j+1]
+            if(j-1 >= 0):
+                x7 = image[i-1, j-1]
+
+        if(j-1 >= 0):
+            x3 = image[i, j-1]
+
+        if(i+1 < row):
+            x4 = image[i+1, j]
+            if(j+1 < col):
+                x5 = image[i+1, j+1]
+            if(j-1 >= 0):
+                x8 = image[i+1, j-1]
 
         h_results = {'q' : 0, 'r' : 0, 's' : 0} # count of q/r/s for the 4 corner neighborhoods
-        h_results[ Yokoi_4_connectivity.formula_h(x0, x1, x6, x2) ] += 1 # a1
-        h_results[ Yokoi_4_connectivity.formula_h(x0, x2, x7, x3) ] += 1 # a2
-        h_results[ Yokoi_4_connectivity.formula_h(x0, x3, x8, x4) ] += 1 # a3
-        h_results[ Yokoi_4_connectivity.formula_h(x0, x4, x5, x1) ] += 1 # a4
+        h_results[ Yokoi_4_connectivity_Operator.function_h(x0, x1, x6, x2) ] += 1 # a1
+        h_results[ Yokoi_4_connectivity_Operator.function_h(x0, x2, x7, x3) ] += 1 # a2
+        h_results[ Yokoi_4_connectivity_Operator.function_h(x0, x3, x8, x4) ] += 1 # a3
+        h_results[ Yokoi_4_connectivity_Operator.function_h(x0, x4, x5, x1) ] += 1 # a4
 
         if(h_results['r'] == 4):    return 5
         return h_results['q']
 
     @staticmethod
-    def formula_h(b, c, d, e):
+    def function_h(b, c, d, e):
         if(b != c): return 's'
         if(b == c == d == e):   return 'r'
         return 'q'
@@ -91,7 +104,7 @@ if __name__ == "__main__":
     downsampled_image = downsample(binary_image, sample_size=8)
     
     # compute Yokoi connectivity number (4-connected)
-    yokoi = Yokoi_4_connectivity.ComputeConnectivityNumber(image=downsampled_image)
+    yokoi = Yokoi_4_connectivity_Operator.Compute(image=downsampled_image)
     np.savetxt('yokoi.txt', yokoi, fmt='%i')
 
 
