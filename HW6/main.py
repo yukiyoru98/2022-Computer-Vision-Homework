@@ -85,13 +85,13 @@ if __name__ == "__main__":
 
     # read source image in grayscale mode
     image = cv.imread(args.source, 0)
-    # downsample to 64x64
-    downsampled_image = downsample(image, sample_size=8)
     # binarize image with threshold=128
-    binary_image = binarize(downsampled_image, threshold=128)
+    binary_image = binarize(image, threshold=128)
+    # downsample to 64x64
+    downsampled_image = downsample(binary_image, sample_size=8)
     
     # compute Yokoi connectivity number (4-connected)
-    yokoi = Yokoi_4_connectivity.ComputeConnectivityNumber(image=binary_image)
+    yokoi = Yokoi_4_connectivity.ComputeConnectivityNumber(image=downsampled_image)
     np.savetxt('yokoi.txt', yokoi, fmt='%i')
 
 
