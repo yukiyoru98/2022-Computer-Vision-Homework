@@ -14,7 +14,7 @@ def SaveNoiseImg_PrintSNR(filename, source_image, noise_image):
     except: 
         pass
     # cv.imwrite(filename + ".png", noise_image)
-    plt.imshow(noise_image, cmap='gray')
+    plt.imshow(noise_image, cmap='gray', vmin=0, vmax=255)
     snr = SNR(source_image, noise_image)
     plt.title(f'[{filename}] SNR:{snr:.3f}')
     path = os.path.join("Output", filename + ".png")
