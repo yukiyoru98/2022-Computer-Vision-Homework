@@ -82,23 +82,43 @@ def SobelEdgeDetector(image, threshold):
     kernel_1 = Kernel(kernel_1_arr, (1, 1))
     kernel_2 = Kernel(kernel_2_arr, (1, 1))
 
-    # scan each pixel 
-    for i in range(row):
-        for j in range(col):
-            p1 = p2 = 0
-            # run kernel over pixel
-            for k in range(0, kernel_1.row):
-                for l in range(0, kernel_1.col):
-                    # kernel pixel displacement from kernel origin
-                    dy = k - kernel_1.origin[0]
-                    dx = l - kernel_1.origin[1]
-                    p1 += padded_image[i+dy, j+dx] * kernel_1.pixel(k, l)
-                    p2 += padded_image[i+dy, j+dx] * kernel_2.pixel(k, l)
-            gradient_magnitude = np.linalg.norm([p1, p2])
-            if(gradient_magnitude < threshold):
-                result[i, j] = 255
+    # # scan each pixel 
+    # for i in range(row):
+    #     for j in range(col):
+    #         p1 = p2 = 0
+    #         # run kernel over pixel
+    #         for k in range(0, kernel_1.row):
+    #             for l in range(0, kernel_1.col):
+    #                 # kernel pixel displacement from kernel origin
+    #                 dy = k - kernel_1.origin[0]
+    #                 dx = l - kernel_1.origin[1]
+    #                 p1 += padded_image[i+dy, j+dx] * kernel_1.pixel(k, l)
+    #                 p2 += padded_image[i+dy, j+dx] * kernel_2.pixel(k, l)
+    #         gradient_magnitude = np.linalg.norm([p1, p2])
+    #         if(gradient_magnitude < threshold):
+    #             result[i, j] = 255
+    GradientEdgeDetect(padded_image, [kernel_1, kernel_2], result, threshold, row, col)
     
     return result
+
+def GradientEdgeDetect(source, kernels, result, threshold, total_row, total_col):
+    for i in range(total_row):
+        for j in range(total_col):
+            p = [] # save kernel convolution values
+            k_row = kernels[0].row
+            k_col = kernels[1].col
+            # convolution 
+            for k in range(0, k_row):
+                for l in range(0, k_col):
+                    # kernel pixel displacement from kernel origin
+                    dy = k - kernels[0].origin[0]
+                    dx = l - kernels[0].origin[1]
+                    # run all kernels
+                    for kernel_idx in range(len(kernels)):
+                        p[kernel_idx] += source[i+dy, j+dx] * kernels[kernel_idx].pixel(k, l)
+            gradient_magnitude = np.linalg.norm(p)
+            if(gradient_magnitude < threshold):
+                result[i, j] = 255
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
